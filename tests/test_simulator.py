@@ -1,45 +1,16 @@
-from cloudarena.models import Job, Server, SimulationConfig
+from cloudarena.models import SimulationConfig
 from cloudarena.schedulers import FCFSScheduler
 from cloudarena.simulator import Simulator
 
 
-def make_job(job_id, arrival_time=0, deadline=10, duration_mean=2):
-    return Job(
-        job_id=job_id,
-        user_id=0,
-        arrival_time=arrival_time,
-        deadline=deadline,
-        duration_mean=duration_mean,
-        duration_std=1,
-        gpu_required=1,
-        budget=100,
-        private_value=150,
-        priority=1,
-        region="us-east",
-    )
-
-
-def make_server():
-    return Server(
-        server_id=0,
-        data_center_id=0,
-        region="us-east",
-        gpu_capacity=1,
-        available_gpus=1,
-        cost_per_tick=1.0,
-        failure_probability=0.0,
-        latency=10,
-    )
-
-
-def test_simulator_records_five_status_timelines():
+def test_simulator_records_five_status_timelines(job_factory, server_factory):
     jobs = [
-        make_job(1, arrival_time=0),
-        make_job(2, arrival_time=1),
+        job_factory(1, arrival_time=0, duration_mean=2),
+        job_factory(2, arrival_time=1, duration_mean=2),
     ]
     simulator = Simulator(
         jobs=jobs,
-        servers=[make_server()],
+        servers=[server_factory()],
         scheduler=FCFSScheduler(),
         config=SimulationConfig(time_horizon=10),
         seed=1,

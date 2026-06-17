@@ -41,6 +41,27 @@ duration are used as tie-breakers.
 The priority scheduler schedules higher-priority jobs first, then uses deadline
 and expected duration as tie-breakers.
 
+## Core Algorithm: Min-Cost Max-Flow
+
+Day 3 adds a standalone min-cost max-flow implementation in
+`cloudarena/min_cost_flow.py`. It models scheduling as a directed residual graph:
+
+```txt
+source -> jobs -> servers -> sink
+```
+
+Each edge has capacity and cost. Sending one unit of flow through a job-server
+edge means assigning that job to that server. Reverse edges are added
+automatically so later augmenting paths can undo an earlier choice when that
+leads to a lower global cost.
+
+The current implementation uses the successive shortest augmenting path method
+with Dijkstra and Johnson-style potentials over residual edges. Public edge
+costs are kept non-negative; reverse edges may have negative original costs, but
+potentials reweight residual edges so Dijkstra can still be used correctly after
+each augmentation. For `F` units of flow, `V` nodes, and `E` edges, the rough
+time complexity is `O(F * E log V)`.
+
 ## How to Run
 
 ```bash
@@ -59,4 +80,5 @@ python main.py --scheduler priority --jobs 100 --servers 12 --agents 20 --seed 4
 
 ```bash
 pytest
+pytest tests/test_flow.py
 ```
