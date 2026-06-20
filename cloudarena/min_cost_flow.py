@@ -127,7 +127,7 @@ class MinCostFlow:
         while heap:
             current_distance, node = heapq.heappop(heap)
 
-            if current_distance != distance[node]:
+            if current_distance > distance[node]:
                 continue
 
             for edge_index, edge in enumerate(self.graph[node]):

@@ -10,7 +10,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run the CloudArena simulator.")
     parser.add_argument(
         "--scheduler",
-        choices=["fcfs", "edf", "priority"],
+        choices=["fcfs", "edf", "priority", "flow"],
         default="fcfs",
         help="Scheduling strategy to use.",
     )

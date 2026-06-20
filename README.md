@@ -62,18 +62,65 @@ potentials reweight residual edges so Dijkstra can still be used correctly after
 each augmentation. For `F` units of flow, `V` nodes, and `E` edges, the rough
 time complexity is `O(F * E log V)`.
 
+## Flow Scheduler
+
+The flow scheduler integrates the min-cost max-flow algorithm with the simulator.
+At every scheduling tick it builds a fresh graph:
+
+```txt
+source -> waiting jobs -> available servers -> sink
+```
+
+Each selected job-server edge becomes one proposed assignment. The simulator
+still performs the final validation before starting jobs, so all schedulers keep
+the same `[(job_id, server_id), ...]` contract.
+
+## Cost Function
+
+The flow scheduler uses a non-negative cost function so Dijkstra with potentials
+can run without Bellman-Ford initialization:
+
+```txt
+server cost      = server.cost_per_tick * job.duration_mean
+latency cost     = server.latency
+deadline penalty = lateness * 20
+failure penalty  = server.failure_probability * job.private_value
+region penalty   = 25 if job and server regions differ
+priority cost    = 10 - job.priority
+```
+
+This makes cheaper, lower-latency, lower-risk, same-region, higher-priority
+placements more attractive to the optimizer.
+
+## Greedy vs Flow Results
+
+These results use the default workload size and `--seed 42`.
+
+| Scheduler | Completed | Failed | Rejected | Deadline Misses | Avg Wait | GPU Utilization | Total Cost |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| FCFS | 35/39 | 4 | 0 | 0 | 0.00 | 25.7% | 586.88 |
+| EDF | 35/39 | 4 | 0 | 0 | 0.00 | 25.7% | 586.88 |
+| Priority | 35/39 | 4 | 0 | 0 | 0.00 | 25.7% | 586.88 |
+| Flow | 35/39 | 4 | 0 | 0 | 0.03 | 26.2% | 612.66 |
+
+Flow is now integrated and globally optimizes the modeled placement cost. The
+first cost function is intentionally simple; later tuning can make the modeled
+objective line up more strongly with completion rate, deadline misses, and total
+simulator cost.
+
 ## How to Run
 
 ```bash
 python main.py --scheduler fcfs --seed 1
 python main.py --scheduler edf --seed 1
 python main.py --scheduler priority --seed 1
+python main.py --scheduler flow --seed 42
 ```
 
 You can also change workload size:
 
 ```bash
-python main.py --scheduler priority --jobs 100 --servers 12 --agents 20 --seed 42
+python main.py --scheduler flow --jobs 100 --servers 12 --agents 20 --seed 42
 ```
 
 ## Tests
