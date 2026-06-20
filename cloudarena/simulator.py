@@ -2,6 +2,7 @@ import random
 
 from cloudarena.metrics import Metrics
 from cloudarena.models import Job, Server, SimulationConfig
+from cloudarena.probability import sample_runtime, should_fail
 from cloudarena.schedulers import Scheduler
 
 
@@ -61,7 +62,10 @@ class Simulator:
             return self.config.time_horizon
 
         latest_deadline = max(job.deadline for job in self.jobs)
-        longest_duration = max(job.duration_mean for job in self.jobs)
+        longest_duration = max(
+            job.duration_mean + (3 * job.duration_std)
+            for job in self.jobs
+        )
         return max(self.config.time_horizon, latest_deadline + longest_duration + 1)
 
     def _update_running_jobs(self, current_time: int) -> None:
@@ -73,7 +77,7 @@ class Simulator:
                     self._complete_job(job, server, current_time)
                     continue
 
-                if self.rng.random() < server.failure_probability:
+                if should_fail(server.failure_probability, self.rng):
                     self._fail_job(job, server, current_time)
 
     @staticmethod
@@ -130,11 +134,15 @@ class Simulator:
 
             self._start_job(job, server, current_time)
 
-    @staticmethod
-    def _start_job(job: Job, server: Server, current_time: int) -> None:
+    def _start_job(self, job: Job, server: Server, current_time: int) -> None:
         job.status = "RUNNING"
         job.start_time = current_time
-        job.actual_duration = max(1, job.duration_mean)
+        job.actual_duration = sample_runtime(
+            job.duration_mean,
+            job.duration_std,
+            self.rng,
+            self.config.runtime_uncertainty,
+        )
         job.assigned_server = server.server_id
 
         server.available_gpus -= job.gpu_required

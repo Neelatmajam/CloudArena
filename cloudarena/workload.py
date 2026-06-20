@@ -1,6 +1,7 @@
 import random
 
 from cloudarena.models import Job, Server, Agent, DataCenter, SimulationConfig
+from cloudarena.probability import sample_arrival_time
 from cloudarena.config import REGIONS,STRATEGIES, GPU_CAPACITY_OPTIONS ,GPU_REQUIRED_OPTIONS
 
 
@@ -79,7 +80,7 @@ def generate_jobs(config: SimulationConfig, agents, rng: random.Random):
     for job_id in range(config.num_jobs):
         agent = rng.choice(agents)
 
-        arrival_time = rng.randint(0, config.time_horizon // 2)
+        arrival_time = sample_arrival_time(config.time_horizon, rng)
         duration_mean = rng.randint(2, 12)
         duration_std = max(1, duration_mean // 3)
         deadline = arrival_time + duration_mean + rng.randint(5, 25)

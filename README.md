@@ -98,15 +98,54 @@ These results use the default workload size and `--seed 42`.
 
 | Scheduler | Completed | Failed | Rejected | Deadline Misses | Avg Wait | GPU Utilization | Total Cost |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| FCFS | 35/39 | 4 | 0 | 0 | 0.00 | 25.7% | 586.88 |
-| EDF | 35/39 | 4 | 0 | 0 | 0.00 | 25.7% | 586.88 |
-| Priority | 35/39 | 4 | 0 | 0 | 0.00 | 25.7% | 586.88 |
-| Flow | 35/39 | 4 | 0 | 0 | 0.03 | 26.2% | 612.66 |
+| FCFS | 36/39 | 3 | 0 | 0 | 0.00 | 18.1% | 788.52 |
+| EDF | 38/39 | 1 | 0 | 0 | 0.00 | 18.2% | 780.90 |
+| Priority | 38/39 | 1 | 0 | 0 | 0.00 | 16.7% | 733.60 |
+| Flow | 37/39 | 2 | 0 | 0 | 0.13 | 18.4% | 723.60 |
 
 Flow is now integrated and globally optimizes the modeled placement cost. The
 first cost function is intentionally simple; later tuning can make the modeled
 objective line up more strongly with completion rate, deadline misses, and total
 simulator cost.
+
+## Stochastic Simulation
+
+CloudArena now has an explicit probability layer in `cloudarena/probability.py`.
+The simulator uses three stochastic pieces:
+
+- Runtime uncertainty: each started job samples `actual_duration` around
+  `duration_mean` and `duration_std`.
+- Server failures: each running job performs a Bernoulli failure trial each
+  tick using `server.failure_probability`.
+- Arrival variation: generated jobs mix early arrivals, peak-hour arrivals, and
+  late arrivals inside the configured time horizon.
+
+The auction/game-theory scheduler is intentionally skipped to keep this version
+focused on scheduling, probability, and Monte Carlo evaluation.
+
+## Monte Carlo Evaluation
+
+Use repeated runs when you want statistically meaningful results:
+
+```bash
+python main.py --scheduler flow --runs 30 --seed 42
+python main.py --compare-all --runs 30 --seed 42
+```
+
+Monte Carlo results are exported to:
+
+```txt
+results/monte_carlo_results.csv
+```
+
+The table below uses `python main.py --compare-all --runs 30 --seed 42`.
+
+| Scheduler | Avg Completed | Avg Misses | Avg Wait | Avg Utilization | Avg Cost | Std Completed | Std Misses | Std Utilization |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| FCFS | 35.13 | 0.20 | 0.45 | 28.0% | 855.76 | 2.08 | 0.65 | 12.48 |
+| EDF | 34.93 | 0.07 | 0.36 | 27.7% | 842.89 | 2.08 | 0.25 | 12.76 |
+| Priority | 35.00 | 0.27 | 0.32 | 27.2% | 829.55 | 2.10 | 0.73 | 12.23 |
+| Flow | 34.87 | 0.17 | 0.31 | 27.2% | 792.75 | 2.38 | 0.45 | 11.95 |
 
 ## How to Run
 
@@ -115,6 +154,8 @@ python main.py --scheduler fcfs --seed 1
 python main.py --scheduler edf --seed 1
 python main.py --scheduler priority --seed 1
 python main.py --scheduler flow --seed 42
+python main.py --scheduler flow --runs 30 --seed 42
+python main.py --compare-all --runs 30 --seed 42
 ```
 
 You can also change workload size:

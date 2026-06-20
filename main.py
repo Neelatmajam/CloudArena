@@ -1,5 +1,11 @@
 import argparse
 
+from cloudarena.monte_carlo import (
+    MONTE_CARLO_SCHEDULERS,
+    run_monte_carlo,
+    summarize_results,
+    write_monte_carlo_csv,
+)
 from cloudarena.models import SimulationConfig
 from cloudarena.schedulers import create_scheduler
 from cloudarena.simulator import Simulator
@@ -20,6 +26,15 @@ def parse_args():
     parser.add_argument("--agents", type=int, default=None)
     parser.add_argument("--data-centers", type=int, default=None)
     parser.add_argument("--time-horizon", type=int, default=None)
+    parser.add_argument("--runs", type=int, default=1)
+    parser.add_argument("--compare-all", action="store_true")
+    parser.add_argument("--export", default="results/monte_carlo_results.csv")
+    parser.add_argument("--failure-probability", type=float, default=None)
+    parser.add_argument(
+        "--deterministic-runtime",
+        action="store_true",
+        help="Disable stochastic runtime sampling.",
+    )
     return parser.parse_args()
 
 
@@ -40,14 +55,39 @@ def build_config(args) -> SimulationConfig:
             else defaults.time_horizon
         ),
         seed=args.seed,
-        default_failure_probability=defaults.default_failure_probability,
-        runtime_uncertainty=defaults.runtime_uncertainty,
+        default_failure_probability=(
+            args.failure_probability
+            if args.failure_probability is not None
+            else defaults.default_failure_probability
+        ),
+        runtime_uncertainty=not args.deterministic_runtime,
     )
 
 
 def main():
     args = parse_args()
     config = build_config(args)
+
+    if args.runs > 1 or args.compare_all:
+        scheduler_names = (
+            MONTE_CARLO_SCHEDULERS
+            if args.compare_all
+            else (args.scheduler,)
+        )
+        all_runs = []
+
+        for scheduler_name in scheduler_names:
+            runs = run_monte_carlo(scheduler_name, args.runs, config)
+            all_runs.extend(runs)
+            summary = summarize_results(runs)
+
+            for line in summary.summary_lines():
+                print(line)
+            print()
+
+        output_path = write_monte_carlo_csv(args.export, all_runs)
+        print(f"Saved Monte Carlo results to {output_path}")
+        return
 
     jobs, servers, agents, data_centers = generate_workload(config, config.seed)
 
