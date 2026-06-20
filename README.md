@@ -6,10 +6,10 @@ strategies for assigning AI/ML jobs to a limited set of GPU servers.
 
 ## Problem Statement
 
-Users submit GPU jobs with arrival times, deadlines, priorities, budgets, and
-resource requirements. CloudArena simulates a data center deciding which jobs
-should run on which servers while tracking completion rate, deadline misses,
-wait time, GPU utilization, and cost.
+Users submit GPU jobs with arrival times, deadlines, priorities, durations, GPU
+requirements, and regions. CloudArena simulates a data center deciding which
+jobs should run on which servers while tracking completion rate, deadline
+misses, wait time, GPU utilization, and cost.
 
 The simulator records five job-status timelines at each time step: `waiting`,
 `running`, `completed`, `failed`, and `rejected`.
@@ -33,13 +33,13 @@ tie-breaker.
 
 ### Earliest Deadline First
 
-EDF schedules jobs with the closest deadline first. Priority and expected
-duration are used as tie-breakers.
+EDF schedules jobs with the closest deadline first. Priority and duration are
+used as tie-breakers.
 
 ### Priority Scheduler
 
 The priority scheduler schedules higher-priority jobs first, then uses deadline
-and expected duration as tie-breakers.
+and duration as tie-breakers.
 
 ## Core Algorithm: Min-Cost Max-Flow
 
@@ -81,10 +81,10 @@ The flow scheduler uses a non-negative cost function so Dijkstra with potentials
 can run without Bellman-Ford initialization:
 
 ```txt
-server cost      = server.cost_per_tick * job.duration_mean
+server cost      = server.cost_per_tick * job.duration
 latency cost     = server.latency
 deadline penalty = lateness * 20
-failure penalty  = server.failure_probability * job.private_value
+failure penalty  = server.failure_probability * 100
 region penalty   = 25 if job and server regions differ
 priority cost    = 10 - job.priority
 ```
@@ -110,11 +110,9 @@ simulator cost.
 
 ## Stochastic Simulation
 
-CloudArena now has an explicit probability layer in `cloudarena/probability.py`.
-The simulator uses three stochastic pieces:
+CloudArena has an explicit probability layer in `cloudarena/probability.py`.
+The simulator uses two stochastic pieces:
 
-- Runtime uncertainty: each started job samples `actual_duration` around
-  `duration_mean` and `duration_std`.
 - Server failures: each running job performs a Bernoulli failure trial each
   tick using `server.failure_probability`.
 - Arrival variation: generated jobs mix early arrivals, peak-hour arrivals, and
@@ -147,6 +145,39 @@ The table below uses `python main.py --compare-all --runs 30 --seed 42`.
 | Priority | 35.00 | 0.27 | 0.32 | 27.2% | 829.55 | 2.10 | 0.73 | 12.23 |
 | Flow | 34.87 | 0.17 | 0.31 | 27.2% | 792.75 | 2.38 | 0.45 | 11.95 |
 
+## Dynamic Dashboard
+
+Run the interactive Streamlit dashboard with:
+
+```bash
+streamlit run app.py
+```
+
+The dashboard opens with a live simulator. It supports:
+
+- Adding regions, data centers, and GPU servers while the app is running.
+- Adding user jobs with arrival time, deadline, duration, GPU demand, priority,
+  and region.
+- Loading a dry-run template for a simple interview demonstration.
+- Starting, pausing, stepping, or fast-forwarding the simulation clock.
+- Switching live scheduling between FCFS, EDF, Priority, and Min-Cost Flow.
+- Watching waiting, running, completed, failed, and rejected jobs update over
+  time.
+- Seeing which job is assigned to which server, plus current server GPU load.
+
+The second dashboard tab keeps the Monte Carlo summary:
+
+- Repeated scheduler comparison runs.
+- Results table for completed jobs, deadline misses, utilization, wait time,
+  failures, rejections, and cost.
+- Comparison charts and CSV export.
+
+Auction/game-theory analysis is intentionally not included.
+
+## Screenshots
+
+![CloudArena dashboard](screenshots/dashboard.png)
+
 ## How to Run
 
 ```bash
@@ -156,6 +187,7 @@ python main.py --scheduler priority --seed 1
 python main.py --scheduler flow --seed 42
 python main.py --scheduler flow --runs 30 --seed 42
 python main.py --compare-all --runs 30 --seed 42
+streamlit run app.py
 ```
 
 You can also change workload size:

@@ -1,19 +1,6 @@
 import random
 
 
-def sample_runtime(
-    duration_mean: int,
-    duration_std: int,
-    rng: random.Random,
-    runtime_uncertainty: bool = True,
-) -> int:
-    if not runtime_uncertainty:
-        return max(1, duration_mean)
-
-    sampled_duration = rng.gauss(duration_mean, max(1, duration_std))
-    return max(1, int(round(sampled_duration)))
-
-
 def should_fail(failure_probability: float, rng: random.Random) -> bool:
     if failure_probability <= 0:
         return False

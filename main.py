@@ -30,11 +30,6 @@ def parse_args():
     parser.add_argument("--compare-all", action="store_true")
     parser.add_argument("--export", default="results/monte_carlo_results.csv")
     parser.add_argument("--failure-probability", type=float, default=None)
-    parser.add_argument(
-        "--deterministic-runtime",
-        action="store_true",
-        help="Disable stochastic runtime sampling.",
-    )
     return parser.parse_args()
 
 
@@ -60,7 +55,6 @@ def build_config(args) -> SimulationConfig:
             if args.failure_probability is not None
             else defaults.default_failure_probability
         ),
-        runtime_uncertainty=not args.deterministic_runtime,
     )
 
 

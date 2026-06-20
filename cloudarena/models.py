@@ -17,11 +17,8 @@ class Job:
     user_id: int
     arrival_time: int
     deadline: int
-    duration_mean: int
-    duration_std: int
+    duration: int
     gpu_required: int
-    budget: float
-    private_value: float
     priority: int
     region: str
 
@@ -30,8 +27,6 @@ class Job:
     finish_time: Optional[int] = None
     assigned_server: Optional[int] = None
     actual_duration: Optional[int] = None
-    payment: float = 0.0
-    utility: float = 0.0
 
 
 @dataclass
@@ -50,9 +45,6 @@ class Server:
 @dataclass
 class Agent:
     agent_id: int
-    strategy: str
-    budget: float
-    private_value_multiplier: float
 
 
 @dataclass
@@ -73,4 +65,19 @@ class SimulationConfig:
     time_horizon: int = DEFAULT_TIME_HORIZON
     seed: int = DEFAULT_SEED
     default_failure_probability: float = DEFAULT_FAILURE_PROBABILITY
-    runtime_uncertainty: bool = True
+
+    def __post_init__(self) -> None:
+        positive_fields = {
+            "num_jobs": self.num_jobs,
+            "num_servers": self.num_servers,
+            "num_agents": self.num_agents,
+            "num_data_centers": self.num_data_centers,
+            "time_horizon": self.time_horizon,
+        }
+
+        for field_name, value in positive_fields.items():
+            if value <= 0:
+                raise ValueError(f"{field_name} must be positive.")
+
+        if not 0 <= self.default_failure_probability <= 1:
+            raise ValueError("default_failure_probability must be between 0 and 1.")

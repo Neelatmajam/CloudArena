@@ -1,13 +1,5 @@
 REGIONS = ["us-east", "us-west", "europe", "asia"]
 
-STRATEGIES = [
-    "truthful",
-    "underbid",
-    "overbid",
-    "random",
-    "deadline_panic",
-]
-
 JOB_STATUSES = [
     "WAITING",
     "RUNNING",
@@ -21,7 +13,6 @@ SCHEDULERS = [
     "edf",
     "priority",
     "flow",
-    "auction",
 ]
 
 GPU_CAPACITY_OPTIONS = [2, 4, 8]

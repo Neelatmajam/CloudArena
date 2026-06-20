@@ -17,24 +17,23 @@ flow
 ## Log
 
 1. Read the Day 6 roadmap and current simulator.
-   - Why: Day 6 is about stochastic runtime, failures, random arrivals, repeated
-     simulation, summary statistics, and CSV export.
+   - Why: Day 6 is about failures, random arrivals, repeated simulation,
+     summary statistics, and CSV export.
    - Why this beats alternatives: implementing the auction path now would expand
      the project into game theory, which the project owner explicitly chose to
      skip.
 
 2. Created `cloudarena/probability.py`.
-   - Why: runtime sampling, failure trials, and arrival sampling are probability
-     concerns, not scheduler concerns.
+   - Why: failure trials and arrival sampling are probability concerns, not
+     scheduler concerns.
    - Why this beats alternatives: keeping random-variable helpers in one module
      makes them testable and prevents probability logic from being scattered
      across workload generation and simulation.
 
-3. Added stochastic runtime sampling.
-   - Why: Day 2 used `duration_mean` exactly, so repeated runs differed mostly
-     by workload seed and failure events.
-   - Result: each started job now samples `actual_duration` from a bounded
-     Gaussian-style rule: `max(1, round(gauss(mean, std)))`.
+3. Simplified runtime handling after the interview-focused cleanup.
+   - Why: one `duration` field is easier to explain than separate expected and
+     sampled runtime fields.
+   - Result: each started job now runs for its declared `duration`.
 
 4. Kept server failures as Bernoulli trials but routed them through
    `should_fail()`.
@@ -51,8 +50,8 @@ flow
    - Why this beats alternatives: putting this in `main.py` would make the CLI
      hard to test and would mix experiment orchestration with argument parsing.
 
-7. Added `--runs`, `--compare-all`, `--export`, `--failure-probability`, and
-   `--deterministic-runtime` CLI flags.
+7. Added `--runs`, `--compare-all`, `--export`, and
+   `--failure-probability` CLI flags.
    - Why: Day 6 needs repeated simulations and reproducible experiment exports.
    - Result: single-run behavior still works, and `--runs` activates Monte Carlo.
 
@@ -66,8 +65,8 @@ flow
 9. Added tests for probability and Monte Carlo behavior.
    - Why: Day 6 changes affect randomness, so deterministic tests need fixed
      seeds and boundary cases.
-   - Result: tests cover runtime bounds, failure probability boundaries, arrival
-     bounds, Monte Carlo seed progression, summary statistics, and CSV export.
+   - Result: tests cover failure probability boundaries, arrival bounds, Monte
+     Carlo seed progression, summary statistics, and CSV export.
 
 10. Ran focused and full verification.
     - Command: `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest tests/test_probability.py tests/test_monte_carlo.py`

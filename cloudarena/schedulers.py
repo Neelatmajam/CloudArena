@@ -88,7 +88,7 @@ class EarliestDeadlineFirstScheduler(Scheduler):
         current_time: int,
     ) -> list[Assignment]:
         heap = [
-            (job.deadline, -job.priority, job.duration_mean, job.job_id, job)
+            (job.deadline, -job.priority, job.duration, job.job_id, job)
             for job in jobs
         ]
         heapq.heapify(heap)
@@ -110,7 +110,7 @@ class PriorityScheduler(Scheduler):
         current_time: int,
     ) -> list[Assignment]:
         heap = [
-            (-job.priority, job.deadline, job.duration_mean, job.job_id, job)
+            (-job.priority, job.deadline, job.duration, job.job_id, job)
             for job in jobs
         ]
         heapq.heapify(heap)
@@ -189,13 +189,13 @@ class FlowScheduler(Scheduler):
 
     @classmethod
     def compute_cost(cls, job: Job, server: Server, current_time: int) -> float:
-        server_cost = server.cost_per_tick * job.duration_mean
+        server_cost = server.cost_per_tick * job.duration
         latency_cost = server.latency
         deadline_penalty = (
-            max(0, current_time + job.duration_mean - job.deadline)
+            max(0, current_time + job.duration - job.deadline)
             * cls.deadline_penalty_per_tick
         )
-        failure_penalty = server.failure_probability * job.private_value
+        failure_penalty = server.failure_probability * 100
         region_penalty = (
             0
             if server.region == job.region

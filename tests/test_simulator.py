@@ -5,8 +5,8 @@ from cloudarena.simulator import Simulator
 
 def test_simulator_records_five_status_timelines(job_factory, server_factory):
     jobs = [
-        job_factory(1, arrival_time=0, duration_mean=2),
-        job_factory(2, arrival_time=1, duration_mean=2),
+        job_factory(1, arrival_time=0, duration=2),
+        job_factory(2, arrival_time=1, duration=2),
     ]
     simulator = Simulator(
         jobs=jobs,
