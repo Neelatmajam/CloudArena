@@ -1,5 +1,6 @@
-cloudarena_8_9_day_roadmap.md
+*.md
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .DS_Store
+screenshots/
