@@ -9,7 +9,7 @@ strategies for assigning AI/ML jobs to a limited set of GPU servers.
 Users submit GPU jobs with arrival times, deadlines, priorities, durations, GPU
 requirements, and regions. CloudArena simulates a data center deciding which
 jobs should run on which servers while tracking completion rate, deadline
-misses, wait time, GPU utilization, and cost.
+miss, wait time, GPU utilization, and cost.
 
 The simulator records five job-status timelines at each time step: `waiting`,
 `running`, `completed`, `failed`, and `rejected`.
